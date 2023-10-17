@@ -1,6 +1,13 @@
 #include <stdio.h>
 #include <iostream>
+#include "stm32f4xx_hal.h"
+#include <stdio.h>
 using namespace std;
+
+UART_HandleTypeDef huart1;
+
+uint8_t veriler[7];
+
 
 typedef struct {
 	double x;
@@ -14,6 +21,16 @@ typedef struct {
 
 Name x = { 0.76, 0.56, 0.34, 1400, 1200, 1400, 1200 };
 
+void UART_GonderChar(uint8_t karakter) {
+    HAL_UART_Transmit(&huart1, &karakter, 1, HAL_MAX_DELAY);
+}
+
+void UART_GonderUint8(uint8_t veri) {
+    UART_GonderChar('a');
+    HAL_Delay(10);
+    UART_GonderChar(veri);
+}
+
 int main() {
 
 
@@ -23,12 +40,15 @@ int main() {
 	final_x += 128;
 	if (final_x >= 256) { final_x = 255; }
 	else if (final_x <= 0) { final_x = 0; }
+    veriler[0] = (uint_8) final_x;
+
 
 	double y_in_wide_variance = x.y * (1 / 0.0078);    //burada verileri 1/0.0078 ile çarparak -128 ve 128 arasına düşürüyoruz.
 	int final_y = (int)y_in_wide_variance;
 	final_y += 128;
 	if (final_y >= 256) { final_y = 255; }
 	else if (final_y <= 0) { final_y = 0; }
+    veriler[1] = (uint_8) final_y;
 
 
 	double z_in_wide_variance = x.z * (1 / 0.0078);    //burada verileri 1/0.0078 ile çarparak -128 ve 128 arasına düşürüyoruz.
@@ -36,7 +56,7 @@ int main() {
 	final_z += 128;
 	if (final_z >= 256) { final_z = 255; }
 	else if (final_z <= 0) { final_z = 0; }
-	
+	veriler[2] = (uint_8) final_z;
 
 
 	//pwm kismi
@@ -59,7 +79,7 @@ int main() {
 	}
 
 	// Sonucu uint_8 olarak yazdırır
-	uint8_t uint8_pwm_1 = (uint8_t)pwm_1;
+	veriler[3] = (uint8_t)pwm_1;
 	//printf("Sonuc: %d\n", uint8_pwm_1);
 
 	
@@ -82,7 +102,7 @@ int main() {
 	}
 
 	// Sonucu uint_8 olarak yazdırır
-	uint8_t uint8_pwm_3 = (uint8_t)pwm_2;
+	veriler[4] = (uint8_t)pwm_2;
 	//printf("Sonuc: %d\n", uint8_pwm_3);
 
 
@@ -106,7 +126,7 @@ int main() {
 	}
 
 	// Sonucu uint_8 olarak yazdırır
-	uint8_t uint8_pwm_4 = (uint8_t)pwm_3;
+	veriler[5] = (uint8_t)pwm_3;
 	//printf("Sonuc: %d\n", uint8_pwm_4);
 
 
@@ -130,12 +150,19 @@ int main() {
 	}
 
 	// Sonucu uint_8 olarak yazdırır
-	uint8_t uint8_pwm = (uint8_t)pwm_4;
+	veriler [6]= (uint8_t)pwm_4;
 	//printf("Sonuc: %d\n", uint8_pwm);
 
+    HAL_Init();
+    HAL_UART_Init(&huart1);
 
-
-
-
-
+    while (1) {
+        for (int i = 0; i < 7; i++) {
+            char karakter = 'a' + i;
+            UART_GonderChar(karakter);
+            HAL_Delay(10);
+            UART_GonderUint8(veriler[i]);
+            HAL_Delay(1000);
+        }
+    }
 }
